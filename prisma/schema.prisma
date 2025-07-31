@@ -1,0 +1,151 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  image     String?
+  createdAt DateTime @default(now())
+  accounts  Account[]
+  sessions  Session[]
+  settings  UserSettings?
+  projects  Project[]
+  conversations Conversation[]
+  googleCredentials GoogleCredential[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UserSettings {
+  id          String @id @default(cuid())
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  defaultModel String @default("light") // "light" | "medium" | "hard"
+}
+
+model Project {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String   @default("Untitled Project")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tags      String[]
+  cases     Case[]
+  cards     Card[]
+  extempTopics ExtempTopic[]
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Case {
+  id              String        @id @default(cuid())
+  projectId       String
+  title           String
+  content         Json?
+  googleDocId     String?
+  uploadedFilePath String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  featureNotes    FeatureNote[]
+  project         Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model FeatureNote {
+  id         String   @id @default(cuid())
+  caseId     String
+  feature    String   // "rebuttal" | "cardCutter" | "extemp" | "wordChoice" | "speechCritique" | "flowOpt"
+  input      Json
+  result     Json
+  modelUsed  String
+  latencyMs  Int?
+  createdAt  DateTime @default(now())
+  case       Case     @relation(fields: [caseId], references: [id], onDelete: Cascade)
+}
+
+model Conversation {
+  id         String    @id @default(cuid())
+  userId     String
+  projectId  String?
+  feature    String
+  mode       String    // light|medium|hard
+  createdAt  DateTime  @default(now())
+  messages   Message[]
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  role           String       // "user"|"assistant"|"system"
+  content        String       @db.Text
+  tokens         Int?
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+}
+
+model Card {
+  id        String   @id @default(cuid())
+  projectId String
+  url       String
+  title     String?
+  tags      String[]
+  content   String?  @db.Text
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model ExtempTopic {
+  id        String   @id @default(cuid())
+  projectId String
+  prompt    String   @db.Text
+  outline   Json
+  result    Json
+  createdAt DateTime @default(now())
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+}
+
+model GoogleCredential {
+  id           String   @id @default(cuid())
+  userId       String
+  accessToken  String   @db.Text
+  refreshToken String   @db.Text
+  scope        String
+  tokenType    String?
+  expiryDate   BigInt?
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+} 
