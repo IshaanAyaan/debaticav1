@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -30,12 +30,12 @@ model Account {
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
+  refresh_token     String?
+  access_token      String?
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String? @db.Text
+  id_token          String?
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -64,7 +64,7 @@ model Project {
   name      String   @default("Untitled Project")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  tags      String[]
+  tags      String
   cases     Case[]
   cards     Card[]
   extempTopics ExtempTopic[]
@@ -75,7 +75,7 @@ model Case {
   id              String        @id @default(cuid())
   projectId       String
   title           String
-  content         Json?
+  content         String?
   googleDocId     String?
   uploadedFilePath String?
   createdAt       DateTime      @default(now())
@@ -88,8 +88,8 @@ model FeatureNote {
   id         String   @id @default(cuid())
   caseId     String
   feature    String   // "rebuttal" | "cardCutter" | "extemp" | "wordChoice" | "speechCritique" | "flowOpt"
-  input      Json
-  result     Json
+  input      String
+  result     String
   modelUsed  String
   latencyMs  Int?
   createdAt  DateTime @default(now())
@@ -111,7 +111,7 @@ model Message {
   id             String       @id @default(cuid())
   conversationId String
   role           String       // "user"|"assistant"|"system"
-  content        String       @db.Text
+  content        String
   tokens         Int?
   createdAt      DateTime     @default(now())
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -122,8 +122,8 @@ model Card {
   projectId String
   url       String
   title     String?
-  tags      String[]
-  content   String?  @db.Text
+  tags      String
+  content   String?
   createdAt DateTime @default(now())
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
@@ -131,9 +131,9 @@ model Card {
 model ExtempTopic {
   id        String   @id @default(cuid())
   projectId String
-  prompt    String   @db.Text
-  outline   Json
-  result    Json
+  prompt    String
+  outline   String
+  result    String
   createdAt DateTime @default(now())
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
@@ -141,8 +141,8 @@ model ExtempTopic {
 model GoogleCredential {
   id           String   @id @default(cuid())
   userId       String
-  accessToken  String   @db.Text
-  refreshToken String   @db.Text
+  accessToken  String
+  refreshToken String
   scope        String
   tokenType    String?
   expiryDate   BigInt?

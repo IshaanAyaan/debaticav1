@@ -53,8 +53,79 @@
   * {
     @apply border-border;
   }
-  body {
+  html, body {
     @apply bg-background text-foreground;
+    background: linear-gradient(135deg, #1e1b4b 0%, #1e3a8a 50%, #7c3aed 100%);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  #__next {
+    background: linear-gradient(135deg, #1e1b4b 0%, #1e3a8a 50%, #7c3aed 100%);
+    min-height: 100vh;
+  }
+  
+  /* Fix scrolling issues */
+  .overflow-auto {
+    overflow: auto !important;
+  }
+  
+  .overflow-y-auto {
+    overflow-y: auto !important;
+  }
+  
+  /* Ensure content areas are scrollable */
+  .content-scrollable {
+    max-height: 70vh;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+  }
+  
+  .content-scrollable::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .content-scrollable::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+  }
+  
+  .content-scrollable::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+  }
+  
+  .content-scrollable::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+  
+  /* Custom scrollbar styles for all scrollable elements */
+  *::-webkit-scrollbar {
+    width: 12px;
+  }
+  
+  *::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+  }
+  
+  *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  
+  *::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+    background-clip: content-box;
+  }
+  
+  /* Ensure main content can scroll */
+  .main-content-scrollable {
+    overflow-y: auto;
+    height: calc(100vh - 80px);
   }
 }
 

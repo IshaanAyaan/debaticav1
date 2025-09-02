@@ -58,7 +58,7 @@ async function runGemini(request: LLMRequest, startTime: number): Promise<LLMRes
   console.log('System prompt length:', request.systemPrompt.length)
   console.log('User input:', request.userInput)
   
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
   
   const prompt = `${request.systemPrompt}\n\nUser Input: ${request.userInput}`
   
@@ -175,7 +175,7 @@ async function* streamGemini(request: LLMRequest): AsyncGenerator<string> {
     throw new Error('Google API key not configured. Please set GOOGLE_API_KEY in your environment variables.')
   }
   
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-exp' })
   const prompt = `${request.systemPrompt}\n\nUser Input: ${request.userInput}`
   
   const result = await model.generateContentStream(prompt)
