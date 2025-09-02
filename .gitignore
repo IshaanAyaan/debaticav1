@@ -2,7 +2,9 @@ node_modules/
 .next/
 .env
 .env.*
+.env.backup
 .DS_Store
 dist/
 build/
 coverage/
+prisma/dev.db
