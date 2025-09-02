@@ -15,6 +15,20 @@ export async function POST(request: NextRequest) {
 
     let { feature, mode, projectId, caseId, userInput, extra } = await request.json()
 
+    // Enhance user input with file content if available
+    let enhancedUserInput = userInput
+    if (extra?.connectedFiles && extra.connectedFiles.length > 0) {
+      const fileContents = extra.connectedFiles.map((file: any) => {
+        if (file.content && file.content !== 'No content available') {
+          return `\n\n--- FILE: ${file.name} ---\n${file.content}\n--- END FILE ---`
+        }
+        return `\n\n--- FILE: ${file.name} ---\n[File content could not be extracted]\n--- END FILE ---`
+      }).join('\n')
+      
+      enhancedUserInput = `${userInput}\n\n${fileContents}`
+      console.log(`Enhanced user input with ${extra.connectedFiles.length} file(s), total length: ${enhancedUserInput.length}`)
+    }
+
     // Load the appropriate prompt file
     const promptPath = path.join(process.cwd(), 'prompts', `${feature}.md`)
     let systemPrompt: string
@@ -30,32 +44,12 @@ export async function POST(request: NextRequest) {
 
     // Get user's default mode if not specified
     if (!mode) {
-      const user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        include: { settings: true }
-      })
-      const defaultMode = user?.settings?.defaultModel || 'light'
-      mode = defaultMode
+      mode = 'light' // Default to light mode for now
     }
 
-    // Create conversation record
-    const conversation = await prisma.conversation.create({
-      data: {
-        userId: session.user.id,
-        projectId,
-        feature,
-        mode,
-      }
-    })
-
-    // Add user message
-    await prisma.message.create({
-      data: {
-        conversationId: conversation.id,
-        role: 'user',
-        content: userInput,
-      }
-    })
+    // For now, skip database operations to avoid foreign key issues
+    // TODO: Implement proper user management and database operations
+    let conversationId = null
 
     // Stream the response
     const stream = new ReadableStream({
@@ -66,34 +60,34 @@ export async function POST(request: NextRequest) {
           for await (const chunk of streamLLM({
             mode,
             systemPrompt,
-            userInput,
+            userInput: enhancedUserInput,
             stream: true,
           })) {
             fullResponse += chunk
             controller.enqueue(new TextEncoder().encode(chunk))
           }
 
-          // Add assistant message
-          await prisma.message.create({
-            data: {
-              conversationId: conversation.id,
-              role: 'assistant',
-              content: fullResponse,
-            }
-          })
+          // Add assistant message (skipped for now due to database issues)
+          // await prisma.message.create({
+          //   data: {
+          //     conversationId: conversation.id,
+          //     role: 'assistant',
+          //     content: fullResponse,
+          //   }
+          // })
 
-          // Create feature note if caseId is provided
-          if (caseId) {
-            await prisma.featureNote.create({
-              data: {
-                caseId,
-                feature,
-                input: { userInput, extra },
-                result: { response: fullResponse },
-                modelUsed: mode,
-              }
-            })
-          }
+          // Create feature note if caseId is provided (skipped for now)
+          // if (caseId) {
+          //   await prisma.featureNote.create({
+          //     data: {
+          //       caseId,
+          //       feature,
+          //       input: { userInput, extra },
+          //       result: { response: fullResponse },
+          //       modelUsed: mode,
+          //     }
+          //   })
+          // }
 
           controller.close()
         } catch (error) {
@@ -113,6 +107,19 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('LLM API error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    
+    // Provide more specific error messages
+    let errorMessage = 'Internal server error'
+    if (error instanceof Error) {
+      if (error.message.includes('PrismaClient')) {
+        errorMessage = 'Database error - please check configuration'
+      } else if (error.message.includes('API key')) {
+        errorMessage = 'API key configuration error'
+      } else {
+        errorMessage = error.message
+      }
+    }
+    
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 } 
